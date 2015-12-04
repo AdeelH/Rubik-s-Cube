@@ -16,17 +16,19 @@ var turnAnglePerFrame = (Math.PI/2)/framesPerTurn;
 var frameCount = 0;
 
 // these have to be assigned on user input:
-var isTurning = false;
+var isTurning = true;
 var rowNo = 1, colNo = 1, sliceNo = 1;
 
 var rowRing, colRing, sliceRing;
 
 var cameraControl = false;
+var shuffles = 20;
 
 // main code
 init();
 makeCubes();
 makeSelectors();
+setTimeout(shuffle, 500);
 render();
 
 function init()
@@ -173,6 +175,38 @@ function makeSelectors()
 	scene.add( sliceRing );
 }
 
+function shuffle()
+{
+	if (shuffles <= 0)
+		return (isTurning = false);
+
+	shuffles--;
+	
+	var op, cl;
+	var r = Math.random();
+	var n = (Math.random()*3)|0;
+	var d = (Math.random() > 0.5) ? 1:-1;
+	
+	if (r < 0.333)
+	{
+		op = rotateRow(n, d*turnAnglePerFrame);
+		cl = updateRowInd(n, d);
+	}
+	else if (r < 0.666)
+	{
+		op = rotateCol(n, d*turnAnglePerFrame);
+		cl = updateColInd(n, d);
+	}
+	else
+	{
+		op = rotateSlice(n, d*turnAnglePerFrame);
+		cl = updateSliceInd(n, -d);
+	}
+
+	isTurning = true;
+	animate(op, function() { cl(); shuffle(); });
+}
+
 function render()
 {
 	// draw row/col selectors
@@ -201,8 +235,8 @@ function animate(currentOperation, cleanup)
 		}
 		else if (isTurning)
 		{
-			currentOperation();
 			frameCount++;
+			currentOperation();
 			requestAnimationFrame(function () { animate(currentOperation, cleanup); });
 		}
 	}
