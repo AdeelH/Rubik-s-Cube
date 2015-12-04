@@ -94,7 +94,7 @@ function makeCubes()
 
 	//Colors: Blue, Green, Red, Orange, Yellow, White
 	var colors = [0x0000ff,0x00ff00,0xff0000,0xff6600,0xffff00,0xffffff];
-	var material = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors/*, shininess: 10, metal: false, specular: 0x333333*/ } );
+	var material = new THREE.MeshPhongMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors, shininess: 10, metal: false, specular: 0x333333 } );
 	
 	for (var i = 0; i < k*k*k; i++) 
 	{
