@@ -26,7 +26,7 @@ var cameraControl = false;
 // main code
 init();
 makeCubes();
-makeCircles();
+makeSelectors();
 render();
 
 function init()
@@ -36,11 +36,11 @@ function init()
 	var aspectRatio = window.innerWidth/window.innerHeight;
 	camera = new THREE.PerspectiveCamera( 50, aspectRatio, 3, 100 );
 	// camera = new THREE.OrthographicCamera( -aspectRatio*viewSize/2, aspectRatio*viewSize/2, viewSize/2, -viewSize/2, 0.1, viewSize );
-	camera.position.z = k+5;
-	camera.position.y = k+3;
+	camera.position.z = k+6;
+	camera.position.y = k+2;
 	camera.position.x = k+3;
 
-	// camera contrls
+	// camera controls
 	controls = new THREE.TrackballControls( camera );
 
 	controls.rotateSpeed = 8.0;
@@ -58,26 +58,27 @@ function init()
 	// lights
 	var light = new THREE.SpotLight( 0xffffff, 1);
 	light.position.set( 0, 0, 8 );
-	scene.add( light );
 
 	var light2 = new THREE.SpotLight( 0xffffff, 1);
 	light2.position.set( 0, 8, 0 );
-	scene.add( light2);
 
 	var light3 = new THREE.SpotLight( 0xffffff, 1);
 	light3.position.set( 0, 0, -8 );
-	scene.add( light3 );
 
 	var light4 = new THREE.SpotLight( 0xffffff, 1);
 	light4.position.set( 0, -8, 0 );
-	scene.add( light4);
 
 	var light5 = new THREE.SpotLight( 0xffffff, 1);
 	light5.position.set( 8, 0, 0 );
-	scene.add( light5 );
 
 	var light6 = new THREE.SpotLight( 0xffffff, 1);
 	light6.position.set( -8, 0, 0 );
+	
+	scene.add( light  );
+	scene.add( light2 );
+	scene.add( light3 );
+	scene.add( light4 );
+	scene.add( light5 );
 	scene.add( light6 );
 
 	renderer = new THREE.WebGLRenderer();
@@ -91,7 +92,7 @@ function makeCubes()
 
 	//Colors: Blue, Green, Red, Orange, Yellow, White
 	var colors = [0x0000ff,0x00ff00,0xff0000,0xff6600,0xffff00,0xffffff];
-	var material = new THREE.MeshPhongMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors, shininess: 10, metal: false, specular: 0x333333 } );
+	var material = new THREE.MeshBasicMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors/*, shininess: 10, metal: false, specular: 0x333333*/ } );
 	
 	for (var i = 0; i < k*k*k; i++) 
 	{
@@ -152,7 +153,7 @@ function makeCubes()
 	}
 }
 
-function makeCircles()
+function makeSelectors()
 {
 	var radius = 2.75;
 	var segments = 100;
@@ -174,12 +175,11 @@ function makeCircles()
 
 function render()
 {
-	// draw row/col selection circles
+	// draw row/col selectors
 	rowRing.position.y   = (rowNo-1)  *(1+gap);
 	colRing.position.x   = (colNo-1)  *(1+gap);
 	sliceRing.position.z = (sliceNo-1)*(1+gap);
 
-	requestAnimationFrame( render );
 	renderer.render( scene, camera );
 }
 
@@ -349,8 +349,27 @@ document.onkeydown = function(evt)
 	
 	if (isTurning || cameraControl) return;
 
-    
-    if (evt.ctrlKey && evt.keyCode == 37) // left
+    if (evt.ctrlKey && evt.shiftKey && evt.keyCode == 39) // right
+    {
+        isTurning = true;
+        animate(rotateAllSlices(-turnAnglePerFrame), updateIndAll(updateSliceInd, 1));
+    }
+    else if (evt.ctrlKey && evt.shiftKey && evt.keyCode == 37) // left
+    {
+        isTurning = true;
+        animate(rotateAllSlices( turnAnglePerFrame), updateIndAll(updateSliceInd, -1));
+    }
+    else if (evt.shiftKey && evt.keyCode == 39) // right
+    {
+        isTurning = true;
+        animate(rotateSlice(sliceNo, -turnAnglePerFrame), updateSliceInd(sliceNo, 1));
+    }
+    else if (evt.shiftKey && evt.keyCode == 37) // left
+    {
+        isTurning = true;
+        animate(rotateSlice(sliceNo,  turnAnglePerFrame), updateSliceInd(sliceNo, -1));
+    }    
+    else if (evt.ctrlKey && evt.keyCode == 37) // left
     {
         isTurning = true;
         animate(rotateAllRows(-turnAnglePerFrame), updateIndAll(updateRowInd, -1));
@@ -369,26 +388,6 @@ document.onkeydown = function(evt)
     {
         isTurning = true;
         animate(rotateAllCols(turnAnglePerFrame), updateIndAll(updateColInd, 1));
-    }
-    else if (evt.shiftKey && evt.altKey && evt.keyCode == 39) // right
-    {
-        isTurning = true;
-        animate(rotateAllSlices(-turnAnglePerFrame), updateIndAll(updateSliceInd, 1));
-    }
-    else if (evt.shiftKey && evt.altKey && evt.keyCode == 37) // left
-    {
-        isTurning = true;
-        animate(rotateAllSlices( turnAnglePerFrame), updateIndAll(updateSliceInd, -1));
-    }
-    else if (evt.altKey && evt.keyCode == 39) // right
-    {
-        isTurning = true;
-        animate(rotateSlice(sliceNo, -turnAnglePerFrame), updateSliceInd(sliceNo, 1));
-    }
-    else if (evt.altKey && evt.keyCode == 37) // left
-    {
-        isTurning = true;
-        animate(rotateSlice(sliceNo,  turnAnglePerFrame), updateSliceInd(sliceNo, -1));
     }
     else if (evt.keyCode == 37) // left
     {
@@ -410,29 +409,37 @@ document.onkeydown = function(evt)
         isTurning = true;
         animate(rotateCol(colNo, turnAnglePerFrame), updateColInd(colNo, 1));
     }
-    else if (evt.keyCode == 65) // left
+    else
     {
-        colNo = (colNo>0) ? (colNo-1)%k:(k-1);
-    }    
-    else if (evt.keyCode == 83) // down
-    {
-        rowNo = (rowNo>0) ? (rowNo-1)%k:(k-1);
-    }
-    else if (evt.keyCode == 69) // backward
-    {
-        sliceNo = (sliceNo>0) ? (sliceNo-1)%k:(k-1);
-    }
-    else if (evt.keyCode == 68) // right
-    {
-        colNo = (colNo+1)%k;
-    }    
-    else if (evt.keyCode == 87) // up
-    {
-        rowNo = (rowNo+1)%k;
-    }
-    else if (evt.keyCode == 81) // forward
-    {
-        sliceNo = (sliceNo+1)%k;
+	    if (evt.keyCode == 65) // left
+	    {
+	        colNo = (colNo>0) ? (colNo-1)%k:(k-1);
+	    }    
+	    else if (evt.keyCode == 83) // down
+	    {
+	        rowNo = (rowNo>0) ? (rowNo-1)%k:(k-1);
+	    }
+	    else if (evt.keyCode == 69) // backward
+	    {
+	        sliceNo = (sliceNo>0) ? (sliceNo-1)%k:(k-1);
+	    }
+	    else if (evt.keyCode == 68) // right
+	    {
+	        colNo = (colNo+1)%k;
+	    }    
+	    else if (evt.keyCode == 87) // up
+	    {
+	        rowNo = (rowNo+1)%k;
+	    }
+	    else if (evt.keyCode == 81) // forward
+	    {
+	        sliceNo = (sliceNo+1)%k;
+	    }
+	    else
+	    {
+	    	return;
+	    }
+	    render();
     }
 };
 
