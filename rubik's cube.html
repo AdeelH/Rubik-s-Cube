@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset=utf-8>
+		<title>Rubik's Cube</title>
+		<style>
+			body { margin: 0; overflow:hidden;}
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="js/three.js"></script>
+		<script src="js/TrackballControls.js"></script>
+		<div id="container"></div>
+		<div id="info" style="background-color:black; color: white">
+			Click the button (or press shift+c) to toggle camera controls</br>
+			<button id='toggle' onClick='toggleCameraControl()'>Toggle Camera Control</button>
+			<hr>
+		</div>
+		<script src="rc.js"></script>
+	</body>
+</html>
