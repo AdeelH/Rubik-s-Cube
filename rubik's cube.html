@@ -13,10 +13,20 @@
 		<script src="js/TrackballControls.js"></script>
 		<div id="container"></div>
 		<div id="info" style="background-color:black; color: white">
-			Click the button (or press shift+c) to toggle camera controls.<br>
-			When on, left-click-and-drag to move camera, right-click-and-drag to pan, and scroll to zoom.<br><br>
-			<button id='toggle' onClick='toggleCameraControl()'>Toggle Camera Control</button>
-			
+			<table>
+				<tr>
+					<td style="padding:20px;">
+						Click the button (or press shift+c) to toggle camera controls.<br>
+						When on, left-click-and-drag to move camera, right-click-and-drag to pan, and scroll to zoom.<br>
+						<button id='toggle' onClick='toggleCameraControl()'>Toggle Camera Control</button>
+					</td>
+					<td style="padding-left:60px;">
+						Rotate on x-axis: left/right arrow (ctrl+left/right for all)<br>
+						Rotate on y-axis: up/down arrow (ctrl+up/down for all)<br>
+						Rotate on z-axis: alt+left/right arrow (shift+alt+left/right for all)
+					</td>
+				</tr>
+			</table>
 		</div>
 		<script src="rc.js"></script>
 	</body>
