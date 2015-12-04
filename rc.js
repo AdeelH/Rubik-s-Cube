@@ -157,14 +157,14 @@ function makeCubes()
 
 function makeSelectors()
 {
-	var radius = 2.75;
+	var radius = 2.45;
 	var segments = 100;
 	var material = new THREE.MeshLambertMaterial({
 		color: 0xaaaaaa, transparent: true, opacity: 0.5
 	});
 	var cyl1 = new THREE.CylinderGeometry( radius, radius, 0.5, segments, segments, true);
-	var cyl2 = new THREE.CylinderGeometry( radius-0.1, radius-0.1, 0.5, segments, segments, true);
-	var cyl3 = new THREE.CylinderGeometry( radius+0.1, radius+0.1, 0.5, segments, segments, true);
+	var cyl2 = new THREE.CylinderGeometry( radius-0.05, radius-0.05, 0.5, segments, segments, true);
+	var cyl3 = new THREE.CylinderGeometry( radius+0.05, radius+0.05, 0.5, segments, segments, true);
 	rowRing = new THREE.Mesh( cyl1, material );
 	colRing = new THREE.Mesh( cyl2, material );
 	sliceRing = new THREE.Mesh( cyl3, material );
