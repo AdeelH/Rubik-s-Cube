@@ -83,7 +83,7 @@ function init()
 	scene.add( light5 );
 	scene.add( light6 );
 
-	renderer = new THREE.WebGLRenderer();
+	renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	document.getElementById("container").appendChild( renderer.domElement );
 }
