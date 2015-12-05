@@ -22,7 +22,7 @@ var rowNo = 1, colNo = 1, sliceNo = 1;
 var rowRing, colRing, sliceRing;
 
 var cameraControl = false;
-var shuffles = 20;
+var shufflesRemaining = 20;
 
 // main code
 init();
@@ -46,8 +46,8 @@ function init()
 	controls = new THREE.TrackballControls( camera );
 
 	controls.rotateSpeed = 8.0;
-	controls.zoomSpeed = 1.2;
-	controls.panSpeed = 0.8;
+	controls.zoomSpeed = 4;
+	controls.panSpeed = 2;
 
 	controls.noZoom = false;
 	controls.noPan = false;
@@ -85,7 +85,7 @@ function init()
 
 	renderer = new THREE.WebGLRenderer();
 	renderer.setSize( window.innerWidth, window.innerHeight );
-	document.body.appendChild( renderer.domElement );
+	document.getElementById("container").appendChild( renderer.domElement );
 }
 
 function makeCubes()
@@ -177,31 +177,57 @@ function makeSelectors()
 
 function shuffle()
 {
-	if (shuffles <= 0)
+	if (shufflesRemaining <= 0)
 		return (isTurning = false);
-
-	shuffles--;
 	
 	var op, cl;
 	var r = Math.random();
 	var n = (Math.random()*3)|0;
 	var d = (Math.random() > 0.5) ? 1:-1;
+	var all = Math.random() > 0.85;
 	
 	if (r < 0.333)
 	{
-		op = rotateRow(n, d*turnAnglePerFrame);
-		cl = updateRowInd(n, d);
+		if (all)
+		{
+			op = rotateAllRows(d*turnAnglePerFrame);
+			cl = updateIndAll(updateRowInd, d);
+		}
+		else
+		{
+			op = rotateRow(n, d*turnAnglePerFrame);
+			cl = updateRowInd(n, d);
+		}
 	}
 	else if (r < 0.666)
 	{
-		op = rotateCol(n, d*turnAnglePerFrame);
-		cl = updateColInd(n, d);
+		if (all)
+		{
+			op = rotateAllCols(d*turnAnglePerFrame);
+			cl = updateIndAll(updateColInd, d);
+		}
+		else
+		{
+			op = rotateCol(n, d*turnAnglePerFrame);
+			cl = updateColInd(n, d);
+		}
 	}
 	else
 	{
-		op = rotateSlice(n, d*turnAnglePerFrame);
-		cl = updateSliceInd(n, -d);
+		if (all)
+		{
+			op = rotateAllSlices(d*turnAnglePerFrame);
+			cl = updateIndAll(updateSliceInd, -d);
+		}
+		else
+		{
+			op = rotateSlice(n, d*turnAnglePerFrame);
+			cl = updateSliceInd(n, -d);
+		}
 	}
+	
+	if (!all)
+		shufflesRemaining--;
 
 	isTurning = true;
 	animate(op, function() { cl(); shuffle(); });
