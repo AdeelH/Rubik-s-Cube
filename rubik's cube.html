@@ -2,6 +2,13 @@
 <html>
 	<head>
 		<meta charset=utf-8>
+		<link href="css/bootstrap.min.css" rel="stylesheet">
+		<link rel="stylesheet" href="css/jquery-ui.min.css">
+		<script src="js/jquery-2.1.3.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+		<script src="js/jquery-ui.min.js"></script>
+		<script src="js/three.js"></script>
+		<script src="js/TrackballControls.js"></script>
 		<title>Rubik's Cube</title>
 		<style>
 			body { margin: 0; overflow:hidden;}
@@ -14,7 +21,8 @@
 				z-index: 100;
 				color: white;
 			}
-			#camera-info
+			#control-instructions { width: 350px; }
+			#camera
 			{
 				position: absolute;
 				left:75%;
@@ -23,26 +31,42 @@
 				z-index: 100;
 				color: white;
 			}
+			#camera-info
+			{
+				width: 180px;
+			}
+			li { background-color: #333; margin: 2px;}
 		</style>
 	</head>
 	<body>
-		<script src="js/three.js"></script>
-		<script src="js/TrackballControls.js"></script>
 		<div id="control-info" style="">
-			<p>
-				Use w, a, s, d, q, e to select.<br>
-				Rotate on x-axis: up/down (ctrl+up/down for all)<br>
-				Rotate on y-axis: left/right (ctrl+left/right for all)<br>
-				Rotate on z-axis: shift+left/right (ctrl+shift+left/right for all)
-			</p>
+			<div id="control-instructions" style="">
+				<ul class="list-unstyled">
+					<li>Use w, a, s, d, q, e to select.</li>
+					<li>Rotate on x-axis: up/down    (ctrl+up/down for all)</li>
+					<li>Rotate on y-axis: left/right (ctrl+left/right for all)</li>
+					<li>Rotate on z-axis: z/x        (ctrl+z/x for all)</li>
+				</ul>
+			</div>
 		</div>
-		<div id="camera-info" style="">
-				<p><button id='toggle' onClick='toggleCameraControl()'>Toggle Camera Control</button>  (or press shift+c)</p>
-				<p>
-					rotate: left-click-and-drag <br>
-					pan:    right-click-and-drag <br>
-					zoom:   scroll
-				</p>
+		<div id="camera">
+			<p><button class='btn btn-default' id='toggle' onClick='toggleCameraControl()'>Toggle Camera Control</button>  (or press shift+c)</p>
+			<div id="camera-info" hidden>
+				<ul class="list-unstyled">
+					<li>rotate: left-click-and-drag</li>
+					<li>pan:    right-click-and-drag</li>
+					<li>zoom:   scroll</li>
+				</ul>
+			</div>
+			<p>
+				<table>
+					<tr>
+						<td><button class='btn btn-default' id='shuffle' onClick='reshuffle()' style="margin: 2px;">Re-shuffle</button></td>
+						<td><div id="slider" style="width:190px; margin: 7px;"></div></td>
+						<td><span><p id="shuffs" style="color: #fff; margin: 2px;">10</p></span></td>
+					</tr>
+				</table>
+			</p>
 		</div>
 		<div id="container">
 		</div>

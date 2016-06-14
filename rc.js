@@ -1,36 +1,50 @@
+/* global variable declarations */
+
+// graphics
 var scene, camera, renderer;
+
+var cameraControl = false;
+var orth = false;
+
+// cubes
 var cubes;
 var k = 3;
 var gap = 0.15;
+
+// rotation
 var rowRotationAxis   = new THREE.Vector4(0,1,0,0);
 var colRotationAxis   = new THREE.Vector4(1,0,0,0);
 var sliceRotationAxis = new THREE.Vector4(0,0,1,0);
 
-var indMapRow   = [[0,  2, 20, 18], [1, 11, 19,  9]];
-var indMapCol   = [[0, 18, 24,  6], [3,  9, 21, 15]];
-var indMapSlice = [[0,  2,  8,  6], [3,  1,  5,  7]];
+var indMapRow   = [[0,  2, 20, 18], [1, 11, 19,  9]]; // indices of the corner and center pieces of the 0th row
+var indMapCol   = [[0, 18, 24,  6], [3,  9, 21, 15]]; // indices of the corner and center pieces of the 0th column
+var indMapSlice = [[0,  2,  8,  6], [3,  1,  5,  7]]; // indices of the corner and center pieces of the 0th slice
 
-// for turn animation
+// selection
+var rowRing, colRing, sliceRing;
+
+// turn-animation
 var framesPerTurn = 20;
 var turnAnglePerFrame = (Math.PI/2)/framesPerTurn;
 var frameCount = 0;
 
-// these have to be assigned on user input:
+// user input
 var isTurning = true;
 var rowNo = 1, colNo = 1, sliceNo = 1;
 
-var rowRing, colRing, sliceRing;
-
-var cameraControl = false;
+// shuffling
 var shufflesRemaining = 20;
 
-// main code
+/*End of global variable declarations*/
+
+/* main code */
 init();
 makeCubes();
 makeSelectors();
-setTimeout(shuffle, 500);
+setTimeout(shuffle, 10);
 render();
 
+/* function definitions */
 function init()
 {
 	scene = new THREE.Scene();
@@ -41,16 +55,16 @@ function init()
 	camera.position.z = k+6;
 	camera.position.y = k+2;
 	camera.position.x = k+3;
-
+	
 	// camera controls
 	controls = new THREE.TrackballControls( camera );
 
 	controls.rotateSpeed = 8.0;
-	controls.zoomSpeed = 4;
-	controls.panSpeed = 2;
+	controls.zoomSpeed   = 1.2;
+	controls.panSpeed    = 0.8;
 
 	controls.noZoom = false;
-	controls.noPan = false;
+	controls.noPan  = false;
 
 	controls.staticMoving = true;
 	controls.dynamicDampingFactor = 0.3;
@@ -58,34 +72,49 @@ function init()
 	controls.addEventListener( 'change', render );
 
 	// lights
-	var light = new THREE.SpotLight( 0xffffff, 1);
-	light.position.set( 0, 0, 8 );
-
-	var light2 = new THREE.SpotLight( 0xffffff, 1);
-	light2.position.set( 0, 8, 0 );
-
-	var light3 = new THREE.SpotLight( 0xffffff, 1);
-	light3.position.set( 0, 0, -8 );
-
-	var light4 = new THREE.SpotLight( 0xffffff, 1);
-	light4.position.set( 0, -8, 0 );
-
-	var light5 = new THREE.SpotLight( 0xffffff, 1);
-	light5.position.set( 8, 0, 0 );
-
-	var light6 = new THREE.SpotLight( 0xffffff, 1);
-	light6.position.set( -8, 0, 0 );
+	var distance = 8;
+	var intensity = 1;
 	
-	scene.add( light  );
+	var light1 = new THREE.SpotLight( 0xffffff, intensity);
+	light1.position.set( 0, 0, distance );
+
+	var light2 = new THREE.SpotLight( 0xffffff, intensity);
+	light2.position.set( 0, 0, -distance );
+
+	var light3 = new THREE.SpotLight( 0xffffff, intensity);
+	light3.position.set( 0, distance, 0  );
+
+	var light4 = new THREE.SpotLight( 0xffffff, intensity);
+	light4.position.set( 0, -distance, 0 );
+
+	var light5 = new THREE.SpotLight( 0xffffff, intensity);
+	light5.position.set( distance, 0, 0 );
+
+	var light6 = new THREE.SpotLight( 0xffffff, intensity);
+	light6.position.set( -distance, 0, 0 );
+	
+	scene.add( light1 );
 	scene.add( light2 );
 	scene.add( light3 );
 	scene.add( light4 );
 	scene.add( light5 );
 	scene.add( light6 );
 
+	var ground = new THREE.Mesh( 
+						new THREE.CircleGeometry( 50, 10 ),
+						new THREE.MeshLambertMaterial({
+								color: 0x111111,
+								side: THREE.DoubleSide
+							})
+					);
+	ground.rotation.x = Math.PI/2;
+	ground.position.y = -8;
+
+	scene.add( ground );
+
 	renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setSize( window.innerWidth, window.innerHeight );
-	document.getElementById("container").appendChild( renderer.domElement );
+	document.body.appendChild( renderer.domElement );
 }
 
 function makeCubes()
@@ -93,16 +122,44 @@ function makeCubes()
 	cubes = [];
 
 	//Colors: Blue, Green, Red, Orange, Yellow, White
-	var colors = [0x0000ff,0x00ff00,0xff0000,0xff6600,0xffff00,0xffffff];
-	var material = new THREE.MeshPhongMaterial( { color: 0xffffff, vertexColors: THREE.FaceColors, shininess: 10, metal: false, specular: 0x333333 } );
+	var colors = [0x0000ff, 0x00ff00, 0xff0000, 0xff6600, 0xffff00, 0xffffff];
 	
 	for (var i = 0; i < k*k*k; i++) 
 	{
-		var x = (i%k-1);
-		var y = (((i/k) | 0)%(k)-1);
-		var z = (((i/(k*k)) | 0)%(k)-1);
+		var x = ( (   i             ) % k ) - 1;
+		var y = ( ( ( i/(k  ) ) | 0 ) % k ) - 1;
+		var z = ( ( ( i/(k*k) ) | 0 ) % k ) - 1;
 
 		var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+		
+		/*var path = "textures/";
+		var format = '.jpg';
+		var urls = [
+			path + '0' + format,path + '0' + format,path + '0' + format,path + '0' + format,path + '0' + format,path + '0' + format
+			 path + '1' + format,
+			path + '2' + format, path + '3' + format,
+			path + '4' + format, path + '5' + format
+		];*/
+
+
+		// THREE.ImageUtils.crossOrigin = "anonymous";
+		// var textureCube = THREE.ImageUtils.loadTexture("textures/metal1.jpeg");
+		// var textureCube = THREE.ImageUtils.loadTexture("textures/metal2.jpg");
+		// var textureCube = THREE.ImageUtils.loadTexture("textures/metal3.jpg");
+		// var textureCube = THREE.ImageUtils.loadTexture("textures/rock.png");
+		// var textureCube = THREE.ImageUtils.loadTexture("textures/crate.jpg");
+		// textureCube.anisotropy = 16; // why not?
+
+		// var textureCube2 = THREE.ImageUtils.loadTextureCube(urls);
+		
+		
+		var material = new THREE.MeshPhongMaterial({ 
+								color: 0xffffff, 
+								vertexColors: THREE.FaceColors, 
+								shininess: 10, 
+								metal: false, 
+								specular: 0x333333 
+							});
 
 		// assign colors to faces
 		for ( j = 0; j < geometry.faces.length; j+=2 ) 
@@ -114,33 +171,33 @@ function makeCubes()
 		// blacken out non-relevant faces
 		if (x > -1)
 		{
-			geometry.faces[ 2 ].color.setHex(0x000000);
-			geometry.faces[ 3 ].color.setHex(0x000000);
+			geometry.faces[ 2 ].color.setHex(0x333333);
+			geometry.faces[ 3 ].color.setHex(0x333333);
 		}
 		if (x < 1)
 		{
-			geometry.faces[ 0 ].color.setHex(0x000000);
-			geometry.faces[ 1 ].color.setHex(0x000000);
+			geometry.faces[ 0 ].color.setHex(0x333333);
+			geometry.faces[ 1 ].color.setHex(0x333333);
 		}
 		if (y > -1)
 		{
-			geometry.faces[ 6 ].color.setHex(0x000000);
-			geometry.faces[ 7 ].color.setHex(0x000000);
+			geometry.faces[ 6 ].color.setHex(0x333333);
+			geometry.faces[ 7 ].color.setHex(0x333333);
 		}
 		if (y < 1)
 		{
-			geometry.faces[ 4 ].color.setHex(0x000000);
-			geometry.faces[ 5 ].color.setHex(0x000000);
+			geometry.faces[ 4 ].color.setHex(0x333333);
+			geometry.faces[ 5 ].color.setHex(0x333333);
 		}
 		if (z > -1)
 		{
-			geometry.faces[ 10 ].color.setHex(0x000000);
-			geometry.faces[ 11 ].color.setHex(0x000000);
+			geometry.faces[ 10 ].color.setHex(0x333333);
+			geometry.faces[ 11 ].color.setHex(0x333333);
 		}
 		if (z < 1)
 		{
-			geometry.faces[ 8 ].color.setHex(0x000000);
-			geometry.faces[ 9 ].color.setHex(0x000000);
+			geometry.faces[ 8 ].color.setHex(0x333333);
+			geometry.faces[ 9 ].color.setHex(0x333333);
 		}
 
 		// make mini-cube
@@ -157,19 +214,25 @@ function makeCubes()
 
 function makeSelectors()
 {
-	var radius = 2.45;
+	var radius = 2.75;
 	var segments = 100;
+
 	var material = new THREE.MeshLambertMaterial({
-		color: 0xaaaaaa, transparent: true, opacity: 0.5
+		color: 0xaaaaaa, 
+		transparent: true, 
+		opacity: 0.5
 	});
 	var cyl1 = new THREE.CylinderGeometry( radius, radius, 0.5, segments, segments, true);
-	var cyl2 = new THREE.CylinderGeometry( radius-0.05, radius-0.05, 0.5, segments, segments, true);
-	var cyl3 = new THREE.CylinderGeometry( radius+0.05, radius+0.05, 0.5, segments, segments, true);
-	rowRing = new THREE.Mesh( cyl1, material );
-	colRing = new THREE.Mesh( cyl2, material );
+	var cyl2 = new THREE.CylinderGeometry( radius-0.1, radius-0.1, 0.5, segments, segments, true);
+	var cyl3 = new THREE.CylinderGeometry( radius+0.1, radius+0.1, 0.5, segments, segments, true);
+
+	rowRing   = new THREE.Mesh( cyl1, material );
+	colRing   = new THREE.Mesh( cyl2, material );
 	sliceRing = new THREE.Mesh( cyl3, material );
-	colRing.rotation.z = Math.PI/2;
+	
+	colRing.rotation.z   = Math.PI/2;
 	sliceRing.rotation.x = Math.PI/2;
+	
 	scene.add( rowRing );
 	scene.add( colRing );
 	scene.add( sliceRing );
@@ -179,58 +242,42 @@ function shuffle()
 {
 	if (shufflesRemaining <= 0)
 		return (isTurning = false);
+
+	shufflesRemaining--;
 	
 	var op, cl;
 	var r = Math.random();
 	var n = (Math.random()*3)|0;
 	var d = (Math.random() > 0.5) ? 1:-1;
-	var all = Math.random() > 0.85;
 	
 	if (r < 0.333)
 	{
-		if (all)
-		{
-			op = rotateAllRows(d*turnAnglePerFrame);
-			cl = updateIndAll(updateRowInd, d);
-		}
-		else
-		{
-			op = rotateRow(n, d*turnAnglePerFrame);
-			cl = updateRowInd(n, d);
-		}
+		op = rotateRow(n, d*turnAnglePerFrame);
+		cl = updateRowInd(n, d);
 	}
 	else if (r < 0.666)
 	{
-		if (all)
-		{
-			op = rotateAllCols(d*turnAnglePerFrame);
-			cl = updateIndAll(updateColInd, d);
-		}
-		else
-		{
-			op = rotateCol(n, d*turnAnglePerFrame);
-			cl = updateColInd(n, d);
-		}
+		op = rotateCol(n, d*turnAnglePerFrame);
+		cl = updateColInd(n, d);
 	}
 	else
 	{
-		if (all)
-		{
-			op = rotateAllSlices(d*turnAnglePerFrame);
-			cl = updateIndAll(updateSliceInd, -d);
-		}
-		else
-		{
-			op = rotateSlice(n, d*turnAnglePerFrame);
-			cl = updateSliceInd(n, -d);
-		}
+		op = rotateSlice(n, d*turnAnglePerFrame);
+		cl = updateSliceInd(n, -d);
 	}
-	
-	if (!all)
-		shufflesRemaining--;
 
 	isTurning = true;
 	animate(op, function() { cl(); shuffle(); });
+}
+
+function reshuffle()
+{
+	if (shufflesRemaining > 0 || isTurning || cameraControl)
+		return;
+
+	shufflesRemaining = $( "#slider" ).slider( "value" );
+	console.log(shufflesRemaining);
+	shuffle();
 }
 
 function render()
@@ -243,6 +290,10 @@ function render()
 	renderer.render( scene, camera );
 }
 
+/*
+	currentOperation: the transformation to be performed
+	cleanup: callback function that will run when the animation ends
+*/
 function animate(currentOperation, cleanup)
 {
 	if(cameraControl)
@@ -277,7 +328,7 @@ function rotateRow(row, angle)
 		for (var i = 0; i < k*k; i++)
 		{
 			var ind = k*row + (i%k) + (((i/k)|0)*(k*k));
-			cubes[ind].position.applyMatrix4(new THREE.Matrix4().makeRotationAxis( rowRotationAxis.normalize(), angle ));
+			cubes[ind].position.applyMatrix4(new THREE.Matrix4().makeRotationAxis( rowRotationAxis, angle ));
 			cubes[ind].rotateOnAxis(cubes[ind].worldToLocal(rowRotationAxis.clone()), angle);
 		}		
 	}
@@ -290,7 +341,7 @@ function rotateCol(col, angle)
 	{
 		for (var i = col; i < cubes.length; i+=k)
 		{
-			cubes[i].position.applyMatrix4(new THREE.Matrix4().makeRotationAxis( colRotationAxis.normalize(), angle ));
+			cubes[i].position.applyMatrix4(new THREE.Matrix4().makeRotationAxis( colRotationAxis, angle ));
 			cubes[i].rotateOnAxis(cubes[i].worldToLocal(colRotationAxis.clone()), angle);
 		}
 	}
@@ -303,7 +354,7 @@ function rotateSlice(slice, angle)
 	{
 		for (var i = slice*k*k; i < (slice+1)*k*k; i++)
 		{
-			cubes[i].position.applyMatrix4(new THREE.Matrix4().makeRotationAxis( sliceRotationAxis.normalize(), angle ));
+			cubes[i].position.applyMatrix4(new THREE.Matrix4().makeRotationAxis( sliceRotationAxis, angle ));
 			cubes[i].rotateOnAxis(cubes[i].worldToLocal(sliceRotationAxis.clone()), angle);
 		}
 	}
@@ -326,7 +377,7 @@ function rotateAllCols(angle)
 	{
 		for (var i = 0; i < k; i++)
 		{
-			rotateCol(i, angle)();		
+			rotateCol(i, angle)();
 		}
 	}
 }
@@ -398,6 +449,20 @@ function updateIndAll(func, dir)
 	}
 }
 
+/* user input handling */
+
+// make slider for # of shuffles
+$( "#slider" ).slider({
+	min  :  1,
+	max  : 50,
+	step :  1,
+	value: 10,
+	range: false,
+	change: function( event, ui ) {
+				$('#shuffs').text(ui.value+'');
+			}
+});
+
 document.onkeydown = function(evt) 
 {
     evt = evt || window.event;
@@ -407,24 +472,25 @@ document.onkeydown = function(evt)
         toggleCameraControl();
     }
 	
-	if (isTurning || cameraControl) return;
+	if (isTurning || cameraControl) 
+		return;
 
-    if (evt.ctrlKey && evt.shiftKey && evt.keyCode == 39) // right
+    if (evt.ctrlKey && evt.keyCode == 88/*evt.ctrlKey && evt.shiftKey && evt.keyCode == 39*/) // right
     {
         isTurning = true;
         animate(rotateAllSlices(-turnAnglePerFrame), updateIndAll(updateSliceInd, 1));
     }
-    else if (evt.ctrlKey && evt.shiftKey && evt.keyCode == 37) // left
+    else if (evt.ctrlKey && evt.keyCode == 90/*evt.ctrlKey && evt.shiftKey && evt.keyCode == 37*/) // left
     {
         isTurning = true;
         animate(rotateAllSlices( turnAnglePerFrame), updateIndAll(updateSliceInd, -1));
     }
-    else if (evt.shiftKey && evt.keyCode == 39) // right
+    else if (evt.keyCode == 88/*evt.shiftKey && evt.keyCode == 39*/) // right
     {
         isTurning = true;
         animate(rotateSlice(sliceNo, -turnAnglePerFrame), updateSliceInd(sliceNo, 1));
     }
-    else if (evt.shiftKey && evt.keyCode == 37) // left
+    else if (evt.keyCode == 90/*evt.shiftKey && evt.keyCode == 37*/) // left
     {
         isTurning = true;
         animate(rotateSlice(sliceNo,  turnAnglePerFrame), updateSliceInd(sliceNo, -1));
@@ -505,13 +571,27 @@ document.onkeydown = function(evt)
 
 function toggleCameraControl()
 {
+	if (shufflesRemaining > 0)
+		return;
 	if(cameraControl)
 	{
 		cameraControl = false;
+		$('#toggle').removeClass('active');
+		$('#toggle').removeClass('btn-success');
+		$('#toggle').addClass('btn-default');
+		$('#camera-info').slideUp();
+		$('#shuffle').prop('disabled', false);
+		$('#slider').slider('enable');
 	}
 	else
 	{
-		cameraControl= true;
+		$('#toggle').removeClass('btn-default');
+		$('#toggle').addClass('btn-success');
+		$('#toggle').addClass('active');
+		$('#camera-info').slideDown();
+		$('#shuffle').prop('disabled', true);
+		$('#slider').slider('disable');
+		cameraControl = true;
 		animate();
 	}
 }
